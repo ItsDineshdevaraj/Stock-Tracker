@@ -1,0 +1,37 @@
+name: Build Stock Tracker APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        run: |
+          unzip -o Stock_Tracker_v1_Android_Project.zip -d StockTracker
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        working-directory: StockTracker
+        run: |
+          chmod +x gradlew || true
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stock-Tracker-APK
+          path: StockTracker/app/build/outputs/apk/debug/app-debug.apk
