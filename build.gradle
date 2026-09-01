@@ -2,9 +2,11 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
+
 android {
     namespace 'com.stocktracker.app'
     compileSdk 35
+
     defaultConfig {
         applicationId 'com.stocktracker.app'
         minSdk 26
@@ -12,4 +14,8 @@ android {
         versionCode 1
         versionName '1.0'
     }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }
