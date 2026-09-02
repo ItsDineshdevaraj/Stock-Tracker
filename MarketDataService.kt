@@ -17,14 +17,18 @@ class MarketDataService {
     private val client = OkHttpClient()
     private val executor = Executors.newSingleThreadExecutor()
 
-    fun getBelQuote(
+    fun getQuote(
+        symbol: String,
         onSuccess: (StockQuote) -> Unit,
         onError: (String) -> Unit
     ) {
         executor.execute {
             try {
+
+                val yahooSymbol = "$symbol.NS"
+
                 val url =
-                    "https://query1.finance.yahoo.com/v8/finance/chart/BEL.NS?range=1d&interval=1m"
+                    "https://query1.finance.yahoo.com/v8/finance/chart/$yahooSymbol?range=1d&interval=5m"
 
                 val request = Request.Builder()
                     .url(url)
@@ -39,16 +43,18 @@ class MarketDataService {
                     }
 
                     val body = response.body?.string()
-                        ?: run {
-                            onError("Empty response")
-                            return@use
-                        }
+
+                    if (body.isNullOrEmpty()) {
+                        onError("Empty market data")
+                        return@use
+                    }
 
                     val root = JSONObject(body)
-                    val result =
-                        root.getJSONObject("chart")
-                            .getJSONArray("result")
-                            .getJSONObject(0)
+
+                    val result = root
+                        .getJSONObject("chart")
+                        .getJSONArray("result")
+                        .getJSONObject(0)
 
                     val meta = result.getJSONObject("meta")
 
@@ -63,27 +69,24 @@ class MarketDataService {
                     )
 
                     val changePercent =
-                        if (previousClose != 0.0)
+                        if (previousClose > 0) {
                             ((price - previousClose) / previousClose) * 100
-                        else 0.0
-
-                    val timestamp =
-                        System.currentTimeMillis()
+                        } else {
+                            0.0
+                        }
 
                     onSuccess(
                         StockQuote(
-                            symbol = "BEL",
+                            symbol = symbol,
                             price = price,
                             changePercent = changePercent,
-                            timestamp = timestamp
+                            timestamp = System.currentTimeMillis()
                         )
                     )
                 }
 
             } catch (e: Exception) {
-                onError(
-                    e.message ?: "Unknown error"
-                )
+                onError(e.message ?: "Unable to fetch market data")
             }
         }
     }
